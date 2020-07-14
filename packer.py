@@ -21,6 +21,7 @@ class Canvas():
         self.nodes.append(CanvasNode(0, 0, w, h))
 
     def defragment(self):
+        # TODO: coalesce nodes here!
         for n in self.nodes:
             if (n.get_area() == 0):
                 n.remove(n)
@@ -34,7 +35,7 @@ class Canvas():
                 self.nodes.remove(n) # this should be okay bc returning anyways
                 self.nodes.extend([newnode, left, bot])
                 self.defragment()
-                self.nodes.sort(key=lambda a : a.get_area(), reverse=True)
+                self.nodes.sort(key=lambda a : a.y * self.width + a.x, reverse=True)
                 return
         assert(False)
 
