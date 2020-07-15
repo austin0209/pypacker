@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 from PIL import Image
 
 path = sys.argv[1]
@@ -9,12 +10,14 @@ with os.scandir(path) as it:
     for entry in it:
         if entry.is_file:
             i = Image.open(entry.path)
-            images.append(i)
             print("Found image:", entry.path)
+            entry.path.replace('\\','/')
+            name = entry.path.split('/')[-1].split('.')[0]
+            images.append((i, name))
 
-images.sort(key=lambda i : i.height, reverse=True)
-min_width = images[-1].width
-min_height = images[-1].height
+images.sort(key=lambda i : i[0].height, reverse=True)
+min_width = images[-1][0].width
+min_height = images[-1][0].height
 
 class CanvasNode():
     def __init__(self, x, y, w, h, image=None):
@@ -43,7 +46,7 @@ class Canvas():
             if (n.area == 0):
                 self.nodes.remove(n)
 
-        ''' This code doesn't work right now...
+        ''' This code doesn't work right now. It might not even be necessary!
         can_coalesce = True
         while can_coalesce:
             can_coalesce = False
@@ -64,10 +67,10 @@ class Canvas():
 
     def add_image(self, image):
         for n in self.nodes:
-            if n.image == None and n.width >= image.width and n.height >= image.height:
-                newnode = CanvasNode(n.x, n.y, image.width, image.height, image)
-                left = CanvasNode(n.x + image.width, n.y, n.width - image.width, image.height)
-                bot = CanvasNode(n.x, n.y + image.height, n.width, n.height - image.height)
+            if n.image == None and n.width >= image[0].width and n.height >= image[0].height:
+                newnode = CanvasNode(n.x, n.y, image[0].width, image[0].height, image)
+                left = CanvasNode(n.x + image[0].width, n.y, n.width - image[0].width, image[0].height)
+                bot = CanvasNode(n.x, n.y + image[0].height, n.width, n.height - image[0].height)
                 self.nodes.remove(n) # this should be okay bc returning anyways
                 self.nodes.extend([newnode, left, bot])
                 self.defragment()
@@ -78,8 +81,16 @@ class Canvas():
         result = Image.new("RGBA", (self.width, self.height))
         for n in self.nodes:
             if n.image != None:
-                result.paste(n.image, (n.x, n.y))
+                result.paste(n.image[0], (n.x, n.y))
         return result
+
+    def get_json(self):
+        result = {}
+        for n in self.nodes:
+            if n.image != None:
+                name = n.image[1]
+                result[name] = {"x" : n.x, "y" : n.y, "width" : n.width, "height" : n.height}
+        return json.dumps(result, indent=4);
 
     def __str__(self):
         res = ""
@@ -100,6 +111,7 @@ while (not success):
             break
     if success:
         canvas.get_result().save("result.png")
-        print("Sprite sheet successfully generated!")
+        with open("result.json", "w") as json_file:
+            json_file.write(canvas.get_json())
+        print("Sprite sheet and json file successfully generated!")
         break
-
