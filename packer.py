@@ -10,7 +10,8 @@ class CanvasNode():
         self.height = h
         self.image = image
 
-    def get_area(self):
+    @property
+    def area(self):
         return self.width * self.height
 
 class Canvas():
@@ -23,8 +24,8 @@ class Canvas():
     def defragment(self):
         # TODO: coalesce nodes here!
         for n in self.nodes:
-            if (n.get_area() == 0):
-                n.remove(n)
+            if (n.area == 0):
+                self.nodes.remove(n)
 
     def add_image(self, image):
         for n in self.nodes:
@@ -35,9 +36,9 @@ class Canvas():
                 self.nodes.remove(n) # this should be okay bc returning anyways
                 self.nodes.extend([newnode, left, bot])
                 self.defragment()
-                self.nodes.sort(key=lambda a : a.y * self.width + a.x, reverse=True)
-                return
-        assert(False)
+                self.nodes.sort(key=lambda a : a.area)
+                return True
+        return False
 
     def get_result(self):
         result = Image.new("RGBA", (self.width, self.height))
@@ -48,18 +49,28 @@ class Canvas():
 
 path = sys.argv[1]
 
-canvas = Canvas(1280, 720);
+canvas_size = 128
 images = []
-result = Image.new("RGBA", (1280, 720));
 
 with os.scandir(path) as it:
     for entry in it:
         if entry.is_file:
             i = Image.open(entry.path)
             images.append(i)
-            print("Found image: ", entry.path)
+            print("Found image:", entry.path)
 
-for img in sorted(images, key=lambda i : i.width * i.height, reverse=True):
-    canvas.add_image(img)
+success = False
 
-canvas.get_result().save("result.png")
+while (not success):
+    success = True
+    canvas = Canvas(canvas_size, canvas_size);
+    for img in sorted(images, key=lambda i : i.width * i.height, reverse=True):
+        if not canvas.add_image(img):
+            success = False
+            canvas_size *= 2
+            break
+    if success:
+        canvas.get_result().save("result.png")
+        print("Sprite sheet successfully generated!")
+        break
+
