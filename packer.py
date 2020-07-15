@@ -11,8 +11,8 @@ with os.scandir(path) as it:
         if entry.is_file:
             i = Image.open(entry.path)
             print("Found image:", entry.path)
-            entry.path.replace('\\','/')
-            name = entry.path.split('/')[-1].split('.')[0]
+            unix_path = entry.path.replace('\\','/')
+            name = unix_path.split('/')[-1].split('.')[0]
             images.append((i, name))
 
 images.sort(key=lambda i : i[0].height, reverse=True)
