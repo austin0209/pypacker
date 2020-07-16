@@ -3,6 +3,40 @@ import os
 import json
 from PIL import Image
 
+def trimmed(img):
+    temp = Image.new("RGBA", (img.width, img.height))
+    temp.paste(img, (0, 0))
+
+    def get_left():
+        for x in range(0, img.width):
+            for y in range(0, img.height):
+                pix = temp.getchannel("A").getpixel((x, y))
+                if pix != 0:
+                    return x
+
+    def get_right():
+        for x in range(img.width - 1, -1, -1):
+            for y in range(0, img.height):
+                pix = temp.getchannel("A").getpixel((x, y))
+                if pix != 0:
+                    return x + 1
+
+    def get_top():
+        for y in range(0, img.height):
+            for x in range(0, img.width):
+                pix = temp.getchannel("A").getpixel((x, y))
+                if pix != 0:
+                    return y
+
+    def get_bot():
+        for y in range(img.height - 1, -1, -1):
+            for x in range(0, img.width):
+                pix = temp.getchannel("A").getpixel((x, y))
+                if pix != 0:
+                    return y + 1
+
+    return img.crop((get_left(), get_top(), get_right(), get_bot()))
+
 path = sys.argv[1]
 images = []
 
@@ -13,11 +47,9 @@ with os.scandir(path) as it:
             print("Found image:", entry.path)
             unix_path = entry.path.replace('\\','/')
             name = unix_path.split('/')[-1].split('.')[0]
-            images.append((i, name))
+            images.append((trimmed(i), name))
 
 images.sort(key=lambda i : i[0].height, reverse=True)
-min_width = images[-1][0].width
-min_height = images[-1][0].height
 
 class CanvasNode():
     def __init__(self, x, y, w, h, image=None):
@@ -98,7 +130,7 @@ class Canvas():
             res += str(n)
         return res;
 
-canvas_size = 128
+canvas_size = 1
 success = False
 
 while (not success):
