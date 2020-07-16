@@ -3,6 +3,10 @@ import os
 import json
 from PIL import Image
 
+path = sys.argv[1]
+images = []
+border = 2
+
 def trimmed(img):
     temp = Image.new("RGBA", (img.width, img.height))
     temp.paste(img, (0, 0))
@@ -35,21 +39,11 @@ def trimmed(img):
                 if pix != 0:
                     return y + 1
 
-    return img.crop((get_left(), get_top(), get_right(), get_bot()))
+    cropped = img.crop((get_left(), get_top(), get_right(), get_bot()))
+    temp2 = Image.new("RGBA", (cropped.width + border, cropped.height + border))
+    temp2.paste(cropped, (0, 0))
+    return temp2
 
-path = sys.argv[1]
-images = []
-
-with os.scandir(path) as it:
-    for entry in it:
-        if entry.is_file:
-            i = Image.open(entry.path)
-            print("Found image:", entry.path)
-            unix_path = entry.path.replace('\\','/')
-            name = unix_path.split('/')[-1].split('.')[0]
-            images.append((trimmed(i), name))
-
-images.sort(key=lambda i : i[0].height, reverse=True)
 
 class CanvasNode():
     def __init__(self, x, y, w, h, image=None):
@@ -71,30 +65,16 @@ class Canvas():
         self.width = w
         self.height = h
         self.nodes = []
-        self.nodes.append(CanvasNode(0, 0, w, h))
+        self.nodes.append(CanvasNode(border, border, w - border, h - border))
+        self.nodes.append(CanvasNode(0, 0, w, border))
+        self.nodes.append(CanvasNode(0, 0, border, h))
+        self.defragment()
 
     def defragment(self):
         for n in self.nodes:
             if (n.area == 0):
                 self.nodes.remove(n)
 
-        ''' This code doesn't work right now. It might not even be necessary!
-        can_coalesce = True
-        while can_coalesce:
-            can_coalesce = False
-            for i in range(len(self.nodes) - 1, 0, -1):
-                n = self.nodes[i]
-                for j in range(len(self.nodes) - 1, 0, -1):
-                    on = self.nodes[j]
-                    if n != on and n.image == None and on.image == None:
-                        if abs(n.x - on.x) < min_width and n.x + n.width == on.x + on.width:
-                            newnode = CanvasNode(max(n.x, on.x), min(n.y, on.y), min(n.width, on.width), n.height + on.height)
-                            self.nodes.remove(n)
-                            self.nodes.remove(on)
-                            self.nodes.append(newnode)
-                            can_coalesce = True
-                            break
-        '''
         self.nodes.sort(key=lambda a : a.area)
 
     def add_image(self, image):
@@ -129,6 +109,18 @@ class Canvas():
         for n in self.nodes:
             res += str(n)
         return res;
+
+
+with os.scandir(path) as it:
+    for entry in it:
+        if entry.is_file:
+            i = Image.open(entry.path)
+            print("Found image:", entry.path)
+            unix_path = entry.path.replace('\\','/')
+            name = unix_path.split('/')[-1].split('.')[0]
+            images.append((trimmed(i), name))
+
+images.sort(key=lambda i : i[0].height, reverse=True)
 
 canvas_size = 1
 success = False
