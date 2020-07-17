@@ -7,7 +7,7 @@ def print_help():
     print("usage:  python pypacker.py <path to image folder> [optional params]")
     print("availiable parameters:")
     print("\t{-h --help}:\n\t\topen this dialogue")
-    print("\t{-o --output} <path to directory>:\n\t\tset folder to output to, must be an existing directory]\n\t\tdefault: current working directory.")
+    print("\t{-o --output} <path to directory>:\n\t\tset folder to output to, must be an existing directory.\n\t\tdefault: current working directory.")
     print("\t{-f --filename} <name>:\n\t\tset filename of outputs (filename.png, filename.json). do not include the file extension here.\n\t\tdefault: \"result\".")
     print("\t{-b --border} <integer value>:\n\t\tset space between each sprite.\n\t\tdefault: 0")
     print("\t{-nt --notrim}:\n\t\tif used, transparent padding will not be trimmed. can be useful if the script is too slow.")
@@ -24,13 +24,14 @@ border = 0
 trim = True
 max_size = 256
 
+if not os.path.isdir(path):
+    if path == "--help" or path == "-h":
+        print_help()
+    else:
+        print("Invalid image folder path!")
+    exit()
+
 try:
-    if not os.path.isdir(path):
-        if path == "--help" or path == "-h":
-            print_help()
-        else:
-            print("Invalid image folder path!")
-        exit()
     i = 2
     while i < len(sys.argv):
         arg = sys.argv[i]
