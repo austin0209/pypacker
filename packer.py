@@ -3,9 +3,66 @@ import os
 import json
 from PIL import Image
 
-path = sys.argv[1]
+def print_help():
+    print("Usage: python pypacker.py <PATH_TO_IMAGE_FOLDER> <OPTIONAL PARAMS>\n")
+    print("Availiable parameters:")
+    print("\t--help: open this dialogue")
+    print("\t--output <PATH_TO_DIR>: set folder to output to, must be an existing directory")
+    print("\t--filename <NAME>: set filename of output (ex. filename.png, filename.json)")
+    print("\t--border <INT>: set space between each sprite.")
+    print("\t--notrim: if used, transparent padding will not be trimmed. Can be useful if the script is too slow.")
+
+try:
+    path = sys.argv[1]
+except:
+    print_help()
+    exit()
+outpath = ""
+filename = "result.png"
 images = []
-border = 2
+border = 0
+trim = True
+
+try:
+    if not os.path.isdir(path):
+        if path == "--help" or path == "-h":
+            print_help()
+        else:
+            print("Invalid image folder path!")
+        exit()
+    i = 2
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        if arg == "--output" or arg == "-o":
+            outpath = sys.argv[i + 1]
+            i += 1
+            if not os.path.isdir(outpath):
+                print("Invalid output folder path!")
+                exit()
+            if outpath[-1] != "/":
+                if os.name == "nt":
+                    if outpath[-1] != "\\":
+                        outpath += "\\"
+                else:
+                    outpath += "/"
+        elif arg == "--filename" or arg == "-f":
+            filename = sys.argv[i + 1]
+            i += 1
+        elif arg == "--border" or arg == "-b":
+            try:
+                border = int(sys.argv[i + 1])
+                i += 1
+            except:
+                print("Invalid border parameter!")
+                exit()
+        elif arg == "--notrim" or arg == "-nt":
+            trim = False
+        else:
+            raise ValueError
+        i += 1
+except:
+    print("Invalid parameters! Use --help for usage info!")
+    exit()
 
 def trimmed(img):
     temp = Image.new("RGBA", (img.width, img.height))
@@ -101,7 +158,7 @@ class Canvas():
         for n in self.nodes:
             if n.image != None:
                 name = n.image[1]
-                result[name] = {"x" : n.x, "y" : n.y, "width" : n.width, "height" : n.height}
+                result[name] = {"x" : n.x, "y" : n.y, "width" : n.width - border, "height" : n.height - border}
         return json.dumps(result, indent=4);
 
     def __str__(self):
@@ -118,7 +175,10 @@ with os.scandir(path) as it:
             print("Found image:", entry.path)
             unix_path = entry.path.replace('\\','/')
             name = unix_path.split('/')[-1].split('.')[0]
-            images.append((trimmed(i), name))
+            if trim:
+                images.append((trimmed(i), name))
+            else:
+                images.append((i, name))
 
 images.sort(key=lambda i : i[0].height, reverse=True)
 
@@ -134,8 +194,13 @@ while (not success):
             canvas_size *= 2
             break
     if success:
-        canvas.get_result().save("result.png")
-        with open("result.json", "w") as json_file:
-            json_file.write(canvas.get_json())
-        print("Sprite sheet and json file successfully generated!")
-        break
+        try:
+            canvas.get_result().save(outpath + filename + ".png")
+            print("Saved sprite sheet at", outpath + filename + ".png!")
+            with open(outpath + filename + ".json", "w") as json_file:
+                json_file.write(canvas.get_json())
+            print("Saved json file at", outpath + filename + ".json!")
+            break
+        except:
+            print("ERROR: Could not save sprite sheet/json! Please ensure all parameters are valid and try again!")
+            exit()
