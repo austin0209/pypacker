@@ -4,6 +4,7 @@ A python script for sprite sheets.
 NOTE: this project is depreciated and will no longer be maintained! Instead check out my new packer, [nPacker](https://github.com/austin0209/npacker). It's pretty much the same thing, but faster, better, and written in node.js.
 
 ## Usage
+```
 usage:  python pypacker.py <path to image folder> [optional params]
 availiable parameters:
         {-h --help}:
@@ -19,3 +20,4 @@ availiable parameters:
                 default: 0
         {-nt --notrim}:
                 if used, transparent padding will not be trimmed. can be useful if the script is too slow.
+```
