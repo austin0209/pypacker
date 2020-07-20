@@ -143,10 +143,10 @@ class Canvas():
         for n in self.nodes:
             if n.idata == None and n.width >= image.width and n.height >= image.height:
                 newnode = CanvasNode(n.x, n.y, image.width, image.height, idata)
-                left = CanvasNode(n.x + image.width, n.y, n.width - image.width, image.height)
+                right = CanvasNode(n.x + image.width, n.y, n.width - image.width, image.height)
                 bot = CanvasNode(n.x, n.y + image.height, n.width, n.height - image.height)
                 self.nodes.remove(n) # this should be okay bc returning anyways
-                self.nodes.extend([newnode, left, bot])
+                self.nodes.extend([newnode, right, bot])
                 self.defragment()
                 return True
         return False
@@ -167,13 +167,13 @@ class Canvas():
                 result["sprites"].append({"name" : n.idata[1],"x" : n.x, \
                         "y" : n.y, "width" : n.width - border, "height" : n.height - border, \
                         "trimRect" : {"width" : n.idata[2], "height" : n.idata[3]}})
-        return json.dumps(result, indent=4);
+        return json.dumps(result, indent=4)
 
     def __str__(self):
         res = ""
         for n in self.nodes:
             res += str(n)
-        return res;
+        return res
 
 
 def add_images_from_dir(dir_path):
@@ -214,7 +214,7 @@ success = False
 
 while (not success):
     success = True
-    canvas = Canvas(canvas_size, canvas_size);
+    canvas = Canvas(canvas_size, canvas_size)
     for img in images:
         if not canvas.add_image(img):
             success = False
